@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Song, FilterType } from '../types';
 import { getSongs, deleteSong } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -78,7 +78,9 @@ export default function Library() {
 
   const orderedGroups = useMemo(() => {
     return Object.keys(groupedSongs).sort(
-      (a, b) => ALL_CATEGORY_ORDER.indexOf(a) - ALL_CATEGORY_ORDER.indexOf(b),
+      (a, b) =>
+        ALL_CATEGORY_ORDER.indexOf(a as typeof ALL_CATEGORY_ORDER[number]) -
+        ALL_CATEGORY_ORDER.indexOf(b as typeof ALL_CATEGORY_ORDER[number]),
     );
   }, [groupedSongs]);
 
