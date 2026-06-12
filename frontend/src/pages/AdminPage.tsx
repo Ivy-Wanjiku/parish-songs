@@ -245,7 +245,23 @@ export default function AdminPage() {
               />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={submitting}
+                onClick={() => {
+                  setNewUsername('');
+                  setNewFirstName('');
+                  setNewLastName('');
+                  setNewEmail('');
+                  setNewPassword('');
+                  setNewRole('admin');
+                  setFormError('');
+                }}
+              >
+                Cancel
+              </button>
               <button type="submit" className="btn btn-gold" disabled={submitting}>
                 {submitting ? 'Creating…' : 'Create Admin'}
               </button>
