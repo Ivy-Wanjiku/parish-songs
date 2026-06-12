@@ -36,7 +36,7 @@ const SongForm: React.FC<SongFormProps> = ({ song, onClose, onSaved }) => {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const isOrdinary = ORDINARY_CAT_IDS.includes(category);
+  const isOrdinary = ORDINARY_CAT_IDS.includes(category as typeof ORDINARY_CAT_IDS[number]);
 
   // Sync ordPart with category for Ordinary songs
   useEffect(() => {
