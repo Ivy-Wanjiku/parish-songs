@@ -1,0 +1,100 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+
+jobs:
+  build:
+    name: Type-check & Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+      - name: Build
+        env:
+          # Use a placeholder for CI — the real URL is set in Vercel env vars
+          VITE_API_URL: https://placeholder.onrender.com
+        run: npm run build
+
+      - name: Upload build artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: frontend/dist
+          retention-days: 7
+
+  # ── Deploy to Vercel on push to main ────────────────────────────────────
+  # Vercel's GitHub integration auto-deploys without any extra config.
+  # This step is only needed if you want the CI workflow to control deploys
+  # rather than Vercel's automatic integration.
+  #
+  # To use it:
+  #   1. Run `npx vercel link` locally to get your project IDs
+  #   2. Add these three secrets to GitHub:
+  #        VERCEL_TOKEN     — from vercel.com/account/tokens
+  #        VERCEL_ORG_ID    — from .vercel/project.json (orgId)
+  #        VERCEL_PROJECT_ID— from .vercel/project.json (projectId)
+  deploy:
+    name: Deploy to Vercel
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to Vercel (production)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            npx vercel --token "$VERCEL_TOKEN" --prod --yes
+          else
+            echo "VERCEL_TOKEN secret not set — skipping manual deploy."
+            echo "Vercel will still auto-deploy via its GitHub integration."
+          fi
