@@ -1,0 +1,55 @@
+name: Database Expiry Reminder
+
+on:
+  # Runs at 08:00 UTC on June 28, 2026 — 14 days before the free DB expires (July 12)
+  schedule:
+    - cron: '0 8 28 6 *'
+
+  # Also allow manual trigger any time
+  workflow_dispatch:
+
+jobs:
+  remind:
+    name: Open expiry reminder issue
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Create reminder issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Render free database expires in 14 days (July 12, 2026)',
+              labels: ['reminder', 'infrastructure'],
+              body: `## Render Free PostgreSQL — Expiry Notice
+
+            Your free Render PostgreSQL database (**parish-songs-db**) will be **automatically deleted on July 12, 2026**.
+
+            ### Action required before July 12
+
+            **Option A — Migrate to Supabase (free, no expiry) ✅ Recommended**
+            1. Create a free project at https://supabase.com
+            2. Get the connection string from Project Settings → Database → Connection string → URI
+            3. Update the \`DATABASE_URL\` environment variable on your Render web service
+            4. Trigger a redeploy on Render (migrations will run automatically)
+            5. Re-run the seed command from Render's Shell tab:
+               \`\`\`
+               python manage.py seed_songs
+               \`\`\`
+
+            **Option B — Upgrade Render DB to Basic ($7/month)**
+            - Go to your database on Render → Plan → Upgrade to Basic
+
+            **Option C — Recreate the free DB (data will be lost)**
+            - Create a new free PostgreSQL on Render and re-seed
+
+            ---
+            > This reminder was created automatically by the \`.github/workflows/db-reminder.yml\` workflow.
+            > Close this issue once you have migrated.
+            `
+            });
+            console.log('Reminder issue created successfully.');
